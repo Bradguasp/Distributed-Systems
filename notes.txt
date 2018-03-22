@@ -1,0 +1,23 @@
+Distributed Systems
+How to read:
+  - Do not worry about the fine details in readings. Just focus on making sure the writers proved what
+  they set out to do or achieve.
+  - Need the details but cannot get lost in them.
+  - Quizzes will ask about design, decisions made.
+  - Trace basic operations throughout the system.
+  - How does data move around the system. How many machines involved.
+  - How many network connections are involved.
+  - What happens when a machine first boots up.
+
+Multiple machines connected by a network.
+Theory | Systems
+
+Systems can mostly be tested with biology. See how a program performs.
+Understand hardware/machine language/file systems/
+ - how does everything interact with each other.
+
+distributed system example:
+  client | server | database
+  - Google / Amazon
+
+Go is statically typed. errors are caught by the compiler
