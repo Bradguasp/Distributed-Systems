@@ -8,8 +8,15 @@ import (
 )
 
 var (
-  mAddress string
+  mAddress      string
+  mLocalAdress  *Replica
 )
+
+func createReplica(address string, cell []string) *Replica {
+  replica := new(Replica)
+  // continue working here.
+  return replica
+}
 
 func getLocalAddress() string {
   var localaddress string
@@ -49,5 +56,7 @@ func init() {
 
  func main() {
    flag.Parse()
+   mAddress += ":" + flag.Args()[0]
    log.Print(mAddress)
+   mLocalAdress = createReplica(mAddress, flag.Args()[1:])
  }
