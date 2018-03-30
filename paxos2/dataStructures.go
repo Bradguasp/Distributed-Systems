@@ -4,6 +4,13 @@ import (
   "sync"
 )
 
+type PrepareReply struct {
+	Okay     bool
+	Promised Sequence
+	Command  Command
+	Slot Slot
+}
+
 type Sequence struct {
   Number  int
   Address string
@@ -31,5 +38,5 @@ type Replica struct {
   Mutex           sync.Mutex
   ToApply         int
   Listeners       map[string]chan string
-  // PrepareReplies  []chan PrepareReply
+  PrepareReplies  []chan PrepareReply
 }
