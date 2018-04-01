@@ -1,11 +1,14 @@
  package main
 
 import (
-	"net/rpc"
-  "net"
-  "net/http"
+  "bufio"
   "flag"
   "log"
+  "net"
+  "net/http"
+	"net/rpc"
+  "os"
+  "strings"
 )
 
 var (
@@ -14,21 +17,23 @@ var (
   mReplica  *Replica
 )
 
-func RunServer(replica *Replica) {
-  rpc.Register(replica)
-  rpc.HandleHTTP()
+func readIO() (string, []string) {
+  reader := bufio.NewReader(os.Stdin)
+  command, _ := reader.ReadString('\n')
+  command = strings.TrimSpace(command)
+  return strings.Fields(command)[0], strings.Fields(command)[1:]
+}
 
-  l, err := net.Listen("tcp", replica.Address)
-  if err != nil {
-    log.Fatal("listen error:", err)
-  }
-
-  go http.Serve(l, nil)
-
-  if err := http.Serve(l, nil); err != nil {
-    log.Fatalf("http.Server: %v", err)
+func replicaCommands() {
+  for {
+    cmd, args := readIO()
+    if cmd == "put" {
+      log.Printf("cmd: [%v], args: [%v] ", cmd, args[:2])
+    }
+    log.Printf("cmd: [%v], args: [%v] ", cmd, args[:])
   }
 }
+
 
 func createReplica(address string, cell []string) *Replica {
   replica := new(Replica)
@@ -44,8 +49,19 @@ func createReplica(address string, cell []string) *Replica {
     replica.Cell = append(replica.Cell, local_addresses+":"+c)
   }
 
+  rpc.Register(replica)
+  rpc.HandleHTTP()
+
+  l, err := net.Listen("tcp", replica.Address)
+  if err != nil {
+    log.Fatal("listen error:", err)
+  }
+
+  go http.Serve(l, nil)
+
   log.Printf("createReplica: Replica created with address %s\n", replica.Address)
   return replica
+
 }
 
 func getLocalAddress() string {
@@ -54,6 +70,7 @@ func getLocalAddress() string {
   if err != nil {
       log.Fatalf("init: failed to find local address: %v", err)
   }
+  // dig through the address and get the ipv4
   // log.Printf("iFaces: %v", iFaces)
   for _, elt := range iFaces {
     // log.Printf("iFace: [%v]", elt)
@@ -93,7 +110,8 @@ func init() {
    for _,v := range (mReplica.Cell) {
      log.Printf("Known Replicas: [%s]", v)
    }
-   RunServer(mReplica)
+
+   go replicaCommands()
 
    <-gKill
  }
