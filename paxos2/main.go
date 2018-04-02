@@ -7,22 +7,42 @@ import (
   "os"
   "strings"
   "fmt"
+  "math/rand"
 )
 
 var (
   gKill     chan bool
   mAddress  string
-  gMe  *Replica
+  mReplica  *Replica
 )
 
 func propose(cmd string, args []string) {
-  var propose Command
+  var proposal Command
   if (len(args) == 2) {
-    propose.Command = fmt.Sprintf("%s %s %s", cmd, args[0], args[1])
+    proposal.Command = fmt.Sprintf("%s %s %s", cmd, args[0], args[1])
   } else {
-    propose.Command = fmt.Sprintf("%s %s", cmd, args[0])
+    proposal.Command = fmt.Sprintf("%s %s", cmd, args[0])
   }
-  log.Printf("propose.Command: [%s] ", propose.Command)
+  log.Printf("proposal.Command: [%s] ", proposal.Command)
+  proposal.Address = mAddress
+  proposal.Tag = rand.Int()
+  var reply bool
+  call(mAddress, "Replica.Propose", proposal, &reply)
+  // log.Printf("Replica.Propose reply: [%v] ", reply)
+
+  // continue here
+  if (reply) {
+    var junk Nothing
+    // var reply string // reply to fill up. replace old variable
+    if cmd == "put" {
+      for _, c := range(append(mReplica.Cell, mReplica.Address)) {
+        var elt KeyValue
+        elt.Key = args[0]
+        elt.Value = args[1]
+        call(c, "Replica.Put", elt, &junk)
+      }
+    }
+  }
 }
 
 
@@ -40,6 +60,12 @@ func getCommands() {
       propose(cmd, args[:2])
     }
     log.Printf("cmd: [%v], args: [%v] ", cmd, args[:])
+    var message string
+    for key, value := range mReplica.Database {
+      message += fmt.Sprintf("Key: [%s] Value: [%s]\n", key, value)
+    }
+    log.Printf(message)
+    // log.Printf("database [%v] ", mReplica.Database)
   }
 }
 
@@ -51,9 +77,9 @@ func init() {
  func main() {
    flag.Parse()
    mAddress += ":" + flag.Args()[0]
-   gMe = createReplica(mAddress, flag.Args()[1:])
+   mReplica = createReplica(mAddress, flag.Args()[1:])
    // the other address
-   for _,v := range (gMe.Cell) {
+   for _,v := range (mReplica.Cell) {
      log.Printf("Known Replicas: [%s]", v)
    }
 

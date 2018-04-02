@@ -4,6 +4,13 @@ import (
   "sync"
 )
 
+type Nothing struct{}
+
+type KeyValue struct {
+	Key   string
+	Value string
+}
+
 type PrepareReply struct {
 	Okay     bool
 	Promised Sequence

@@ -10,6 +10,22 @@ import (
   // "strings"
 )
 
+func call(address string, method string, request interface{}, reply interface{}) interface{} {
+  client, err := rpc.DialHTTP("tcp", string(address))
+  if err != nil {
+    log.Printf("Dialing Error: %v", err)
+    return 1
+  }
+  defer client.Close()
+
+  err = client.Call(method, request, reply)
+  if err != nil {
+    log.Println("call: failed to call", address, method, request, reply)
+    log.Fatal("call: Call error: ", err)
+  }
+  return reply
+}
+
 func createReplica(address string, cell []string) *Replica {
   replica := new(Replica)
   replica.Address = address
