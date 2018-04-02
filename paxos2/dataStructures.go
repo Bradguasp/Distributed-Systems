@@ -31,9 +31,9 @@ type Slot struct {
 }
 
 type Replica struct {
-  Database        map[string]string
   Address         string
   Cell            []string
+  Database        map[string]string
   Slot            []Slot
   Mutex           sync.Mutex
   ToApply         int

@@ -1,49 +1,24 @@
  package main
 
 import (
-  "bufio"
-  "flag"
+  // "bufio"
   "log"
   "net"
   "net/http"
 	"net/rpc"
-  "os"
-  "strings"
+  // "os"
+  // "strings"
 )
-
-var (
-  gKill     chan bool
-  mAddress  string
-  mReplica  *Replica
-)
-
-func readIO() (string, []string) {
-  reader := bufio.NewReader(os.Stdin)
-  command, _ := reader.ReadString('\n')
-  command = strings.TrimSpace(command)
-  return strings.Fields(command)[0], strings.Fields(command)[1:]
-}
-
-func replicaCommands() {
-  for {
-    cmd, args := readIO()
-    if cmd == "put" {
-      log.Printf("cmd: [%v], args: [%v] ", cmd, args[:2])
-    }
-    log.Printf("cmd: [%v], args: [%v] ", cmd, args[:])
-  }
-}
-
 
 func createReplica(address string, cell []string) *Replica {
   replica := new(Replica)
+  replica.Address = address
   replica.Database = make(map[string]string)
+  replica.ToApply = -1
   replica.Listeners = make(map[string]chan string, len(cell))
   replica.PrepareReplies = make([]chan PrepareReply, len(cell))
-  replica.Address = address
   // init 10 slots
   replica.Slot = make([]Slot, 10)
-  replica.ToApply = -1
   local_addresses := getLocalAddress()
   for _, c := range (cell) {
     replica.Cell = append(replica.Cell, local_addresses+":"+c)
@@ -96,22 +71,3 @@ func getLocalAddress() string {
   }
   return localaddress
 }
-
-func init() {
-  gKill = make(chan bool, 1)
-  mAddress = getLocalAddress()
-}
-
- func main() {
-   flag.Parse()
-   mAddress += ":" + flag.Args()[0]
-   mReplica = createReplica(mAddress, flag.Args()[1:])
-   // the other address
-   for _,v := range (mReplica.Cell) {
-     log.Printf("Known Replicas: [%s]", v)
-   }
-
-   go replicaCommands()
-
-   <-gKill
- }
