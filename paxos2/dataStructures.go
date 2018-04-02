@@ -2,6 +2,7 @@ package main
 
 import (
   "sync"
+  // "fmt"
 )
 
 type Nothing struct{}
@@ -11,12 +12,18 @@ type KeyValue struct {
 	Value string
 }
 
+type PrepareSend struct {
+	Slot     Slot
+	Sequence Sequence
+}
+
 type PrepareReply struct {
 	Okay     bool
 	Promised Sequence
 	Command  Command
 	Slot Slot
 }
+
 
 type Sequence struct {
   Number  int
