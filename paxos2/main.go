@@ -45,6 +45,12 @@ func propose(cmd string, args []string) {
   }
 }
 
+func dump() {
+  var junk Nothing
+  var reply Nothing
+  call(mAddress, "Replica.Dump", junk, &reply)
+}
+
 
 func readCommand() (string, []string) {
   reader := bufio.NewReader(os.Stdin)
@@ -58,13 +64,15 @@ func getCommands() {
     cmd, args := readCommand()
     if cmd == "put" {
       propose(cmd, args[:2])
+    } else if (cmd == "dump") {
+      dump()
     }
-    log.Printf("cmd: [%v], args: [%v] ", cmd, args[:])
-    var message string
-    for key, value := range mReplica.Database {
-      message += fmt.Sprintf("Key: [%s] Value: [%s]\n", key, value)
-    }
-    log.Printf(message)
+    // log.Printf("cmd: [%v], args: [%v] ", cmd, args[:])
+    // var message string
+    // for key, value := range mReplica.Database {
+    //   message += fmt.Sprintf("Key: [%s] Value: [%s]\n", key, value)
+    // }
+    // log.Printf(message)
     // log.Printf("database [%v] ", mReplica.Database)
   }
 }
