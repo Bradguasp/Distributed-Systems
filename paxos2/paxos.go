@@ -10,11 +10,14 @@ func (r *Replica) Prepare(message PrepareSend, reply *PrepareReply) error {
   r.Mutex.Lock()
   defer r.Mutex.Unlock()
 
+// your number is bigger? okay ill promise to not accept any number smaller than that
   if(message.Sequence.Number > r.ToApply) {
     reply.Okay = true
     reply.Promised = message.Slot.Promise
     reply.Command = message.Slot.Command
     r.ToApply++
+// yours is smaller? sorry I already promised on a number bigger than that
+// my number is bigger.
   } else {
     reply.Okay = false
     reply.Promised = r.Slot[r.ToApply].Promise
@@ -79,7 +82,7 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
       call(c, "Replica.Prepare", prepare_send, &prepare_reply)
       if(prepare_reply.Okay == true) {
         upvote++
-        if(upvote * 2 >= len(r.Cell) + 1) {
+        if(upvote * 2 >= len(r.Cell) + 1) { // if there is a majority
           done = true
           fmt.Println("[", prepare_send.Sequence.Number, "] Prepare accepted:", upvote, "/", len(r.Cell) + 1)
 					break
