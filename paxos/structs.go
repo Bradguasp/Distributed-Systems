@@ -18,7 +18,6 @@ func (kv KeyValue) String() string {
 
 //
 type Command struct {
-	// Promise Sequence or Seq
 	Command string
 	Address string
 	Tag int
@@ -40,16 +39,10 @@ func (lhs Command) Cmp(rhs Command) int {
 
 //
 type Slot struct {
-	// decistion
 	Decided  bool
 	Command  Command
-
-	// voting
 	Promise  Sequence
 	Accepted Command
-
-	// proposing
-	// HighestN int
 }
 func (slot Slot) String() string {
 	return fmt.Sprintf("\nSlot{\n Decided: %t %s %s %s \n}", slot.Decided, slot.Command.String(), slot.Promise.String(), slot.Accepted.String())
@@ -135,12 +128,12 @@ func (dr DecideReply) String() string {
 
 //
 type Replica struct {
-	Address  				string
-	Cell     				[]string
-	Data     				map[string]string
-	Slot	 					[]Slot
-	Mutex    				sync.Mutex
-	ToApply	 				int
-	Listeners 			map[string]chan string
-	PrepareReplies 	[]chan PrepareReply
+	Address  string
+	Cell     []string
+	Data     map[string]string
+	Slot	 []Slot
+	Mutex    sync.Mutex
+	ToApply	 int
+	Listeners map[string]chan string
+	PrepareReplies []chan PrepareReply
 }
