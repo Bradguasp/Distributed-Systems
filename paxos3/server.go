@@ -39,7 +39,7 @@ func runReplica(address string, cell []string) *Replica {
   replica.Address = address
   replica.Data = make(map[string]string)
   // replica.Data["Hello"] = "World"
-  replica.ToApply = -1
+  replica.ID = -1
   replica.PrepareReplies = make([]chan PrepareReply, len(cell))
   // init 10 slots
   replica.Slot = make([]Slot, 10)

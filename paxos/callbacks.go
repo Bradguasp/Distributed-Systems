@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 )
 
 func (r *Replica) Prepare(m PrepareSend, reply *PrepareReply) error {
@@ -22,7 +23,7 @@ func (r *Replica) Prepare(m PrepareSend, reply *PrepareReply) error {
 		reply.Okay = false
 		reply.Promised = r.Slot[r.ToApply].Promise
 		reply.Command = r.Slot[m.Sequence.Number].Command  // reply with the command you have stored at that slot
-		reply.Slot = r.Slot[m.Sequence.Number]
+		// reply.Slot = r.Slot[m.Sequence.Number]
 	}
 	return nil
 }
@@ -116,6 +117,7 @@ func (r *Replica) Propose(command Command, reply *bool) error{
 	// prepare round
 	done := false
 	for {
+		time.Sleep(time.Second*3)
 		pp := 0 // positive prepare replies
 		np := 0 // negative prepare replies
 		//fmt.Println(ps.String())

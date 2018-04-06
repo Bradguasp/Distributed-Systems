@@ -14,7 +14,7 @@ type Replica struct {
   Cell []string
   Data map[string]string
   Slot []Slot
-  ToApply int
+  ID int
   Mutex sync.Mutex
   Listeners map[string]chan string
   PrepareReplies []chan PrepareReply
@@ -24,7 +24,12 @@ func (r Replica) String() string {
   return fmt.Sprintf("%s | %s ", r.Address, r.Cell)
 }
 
-type PrepareReply struct {
+type PrepareRequest struct {
+  Slot Slot
+  Sequence Sequence
+}
+
+type PrepareResponse struct {
   Okay bool
   Promised Sequence
   Command Command
@@ -52,13 +57,13 @@ type Slot struct {
   Accepted Command
 }
 
-type AcceptSend struct {
+type AcceptRequest struct {
   Slot Slot
   Sequence Sequence
   Command Command
 }
 
-type AcceptReply struct {
+type AcceptResponse struct {
   Okay bool
   Promised int
 }
