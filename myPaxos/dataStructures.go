@@ -25,7 +25,7 @@ type Replica struct {
 func (my Sequence) Cmp(your Sequence) int {
   if my.Number < your.Number {
     return -1
-  } else if (my.Number > your.Number) {
+  } else if (my.Number >= your.Number) {
     return 1
   } else {
     return 0
@@ -59,11 +59,15 @@ type Command struct {
   Tag int
 }
 
+func (c Command) String() string {
+  return c.Command
+}
+
 // Each slot represents a single command that should be applied to the database
 // the goal of the system is to ensure that every replica agrees on the same operation in each slot
 // and applies them to the database in the same order.
 type Slot struct {
-  Decide bool
+  Decided bool
   Command Command
   Promise Sequence
   Accepted Command
@@ -80,4 +84,8 @@ type AcceptRequest struct {
 type AcceptResponse struct {
   Okay bool
   Promised Sequence
+}
+
+func (pr PrepareResponse) String() string {
+  return pr.Command.String()
 }

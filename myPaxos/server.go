@@ -36,13 +36,14 @@ func getLocalAddress() string {
 
 func createReplica(address string, cell []string) *Replica {
   replica := new(Replica)
-  replica.Address = address
+  replica.Slot = make([]Slot, 10)
   replica.Data = make(map[string]string)
+  replica.Address = address
   // replica.Data["Hello"] = "World"
   replica.ToApply = 0
   replica.PrepareReplies = make([]chan PrepareResponse, len(cell))
   // init 10 slots
-  replica.Slot = make([]Slot, 10)
+
   local_address := getLocalAddress()
   for _, addr := range(cell) {
     replica.Cell = append(replica.Cell, local_address + ":" + addr)

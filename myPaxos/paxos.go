@@ -2,6 +2,7 @@ package main
 
 import (
   "fmt"
+  "log"
 )
 
 // PrepareRequest: Slot, Sequence // PrepareResponse: Okay, Promised, Command,  -> Slot <- this may be useless
@@ -11,12 +12,15 @@ func (r *Replica) Prepare(yourProposal PrepareRequest, myReply *PrepareResponse)
   // if yourProposal Sequence > r Sequence
   // my promise on that slot number is less than your number
   if r.Slot[yourProposal.SlotNumber].Promise.Cmp(yourProposal.Sequence) < 0 {
+    log.Println("less than")
     myReply.Okay = true
     myReply.Promised = yourProposal.Sequence
     myReply.Command = r.Slot[yourProposal.SlotNumber].Command
+    // fmt.Printf("the command is: %s", r.Slot[yourProposal.SlotNumber].Command)
     r.Slot[yourProposal.SlotNumber].LargestN = yourProposal.Slot.LargestN
   // my number is greater // here is the number that I promised on
   } else {
+    log.Println("greaten than")
     myReply.Okay = false
     myReply.Promised = r.Slot[yourProposal.SlotNumber].Promise
   }
@@ -41,13 +45,40 @@ func (r *Replica) Accept(yourProposal AcceptRequest, myReply *AcceptResponse) er
 }
 
 func (r *Replica) Propose(cmd Command, reply *bool) error {
-  *reply = true
-  // more work
+  r.Mutex.Lock()
+
+  var seq Sequence
+  seq.Address = mAddress
+  seq.Number = 1
+
+  var slot Slot
+  slot.Decided = false
+  slot.Command = cmd
+  slot.Promise = seq
+  slot.Accepted = cmd
+  slot.LargestN = 0
+
+  // package
+  var prepare_request PrepareRequest
+  prepare_request.Slot = slot
+  prepare_request.Sequence = seq
+  prepare_request.SlotNumber = 1
+  var prepare_response PrepareResponse
+  r.Mutex.Unlock()
+  // prepare round
+  // done := false
+  // for {
+  for _, c := range(append(r.Cell, r.Address)) {
+    if err := call(c, "Replica.Prepare", prepare_request, &prepare_response); err != nil {
+      fmt.Printf("Error calling function Replica.Prepare %v", err)
+    }
+    fmt.Printf("responce = %v %v %v\n", prepare_response.Okay, prepare_response.Promised, prepare_response.Command)
+  }
+  // }
   return nil
 }
 
 func (r *Replica) Dump(junk *Nothing, reply *Nothing) error {
-  fmt.Print("made it to server dump")
   r.Mutex.Lock()
   defer r.Mutex.Unlock()
   fmt.Println("Replica [", r.Address, "]")
