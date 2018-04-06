@@ -5,7 +5,7 @@ import (
   "bufio"
   "log"
   "flag"
-  "fmt"
+  "fmt" // doesnt print time and date
   "strings"
   "math/rand"
 )
@@ -23,9 +23,9 @@ func propose(cmd string, args []string) {
   } else {
     proposal.Command = fmt.Sprintf("%s %s", cmd, args[0])
   }
-  log.Printf("proposal.Command: [%s] ", proposal.Command)
   proposal.Address = mAddress
   proposal.Tag = rand.Int()
+  fmt.Printf("cmd[%s] / %s | tag[%v]", proposal.Command, proposal.Address, proposal.Tag)
   var reply bool
   call(mAddress, "Replica.Propose", proposal, &reply)
   // more work
