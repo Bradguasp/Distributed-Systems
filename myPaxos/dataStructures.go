@@ -22,8 +22,19 @@ type Replica struct {
   PrepareReplies []chan PrepareResponse
 }
 
+type Sequence struct {
+  Number int
+  Address string
+}
+
+type Command struct {
+  Command string
+  Address string
+  Tag int
+}
+
 func (my Sequence) Cmp(your Sequence) int {
-  if my.Number < your.Number {
+  if my.Number <= your.Number {
     return -1
   } else if (my.Number >= your.Number) {
     return 1
@@ -48,16 +59,18 @@ type PrepareResponse struct {
   Command Command
 }
 
-type Sequence struct {
-  Number int
-  Address string
+type AcceptRequest struct {
+  Slot Slot
+  Sequence Sequence
+  Command Command
+  SlotNumber int
 }
 
-type Command struct {
-  Command string
-  Address string
-  Tag int
+type AcceptResponse struct {
+  Okay bool
+  Promised Sequence
 }
+
 
 func (c Command) String() string {
   return c.Command
@@ -72,18 +85,6 @@ type Slot struct {
   Promise Sequence
   Accepted Command
   LargestN int
-}
-
-type AcceptRequest struct {
-  Slot Slot
-  Sequence Sequence
-  Command Command
-  SlotNumber int
-}
-
-type AcceptResponse struct {
-  Okay bool
-  Promised Sequence
 }
 
 func (pr PrepareResponse) String() string {
