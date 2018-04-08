@@ -48,6 +48,21 @@ func (r *Replica) Accept(yourProposal AcceptRequest, myReply *AcceptResponse) er
   return nil
 }
 
+// Slot, Command
+func (r *Replica) Decide(yourProposal DecideRequest, myReply *DecideResponse) error {
+  r.Mutex.Lock()
+  defer r.Mutex.Unlock()
+
+  if (yourProposal.Slot.Decided == true) {
+    r.ToApply = yourProposal.Slot.Promise.Number
+    r.Slot[yourProposal.SlotNumber] = yourProposal.Slot
+    myReply.Okay = true
+  } else {
+    myReply.Okay = false
+  }
+  return nil
+}
+
 func (r *Replica) Propose(cmd Command, reply *bool) error {
   r.Mutex.Lock()
 
@@ -126,8 +141,31 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
     }
   }
 
+// DECIDE ROUND
+
   if (decided == true) {
     fmt.Println("majority said yes")
+    r.Mutex.Lock()
+    slot.Decided = true
+    slot.Promise = prepare_response.Promised
+    var decide_request DecideRequest
+    decide_request.Slot = slot
+    decide_request.Command = prepare_response.Command
+    var decide_response DecideResponse
+    r.Mutex.Unlock()
+
+    upVote := 0
+    downVote := 0
+    for _, c := range(append(r.Cell, r.Address)) {
+      call(c, "Replica.Decide", decide_request, &decide_response)
+      if (decide_response.Okay == true) {
+        upVote++
+        fmt.Println("[", accept_request.SlotNumber, "] Decide accpeted", upVote, "/", len(r.Cell) + 1)
+      } else if (decide_response.Okay == false) {
+        downVote++
+        fmt.Println("[", accept_request.SlotNumber, "] Decide declined", downVote, "/", len(r.Cell) + 1)
+      }
+    }
     // r.Slot[yourProposal.SlotNumber].Command = yourProposal.Command
     // at this point. the other 2 applied the command to their slots
     // need to think more | line below prints empty since i never called myself because of majority

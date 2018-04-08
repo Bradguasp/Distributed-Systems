@@ -22,6 +22,14 @@ type Replica struct {
   PrepareReplies []chan PrepareResponse
 }
 
+type Slot struct {
+  Decided bool
+  Command Command
+  Promise Sequence
+  Accepted Command
+  LargestN int
+}
+
 type Sequence struct {
   Number int
   Address string
@@ -71,6 +79,16 @@ type AcceptResponse struct {
   Promised Sequence
 }
 
+type DecideRequest struct {
+  Slot Slot
+  Command Command
+  SlotNumber int
+}
+
+type DecideResponse struct {
+  Okay bool
+}
+
 
 func (c Command) String() string {
   return c.Command
@@ -79,13 +97,6 @@ func (c Command) String() string {
 // Each slot represents a single command that should be applied to the database
 // the goal of the system is to ensure that every replica agrees on the same operation in each slot
 // and applies them to the database in the same order.
-type Slot struct {
-  Decided bool
-  Command Command
-  Promise Sequence
-  Accepted Command
-  LargestN int
-}
 
 func (pr PrepareResponse) String() string {
   return pr.Command.String()
