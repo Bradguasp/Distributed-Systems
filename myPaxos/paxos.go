@@ -10,11 +10,13 @@ import (
 func (r *Replica) Prepare(yourProposal PrepareRequest, myReply *PrepareResponse) error {
   r.Mutex.Lock()
   fmt.Printf("[%v] Prepare: called with N=[%v]\n", r.ToApply, yourProposal.Sequence.Number)
-  fmt.Printf("[%v][%v]\n", yourProposal.Sequence.Number, r.Slot[yourProposal.SlotNumber].Promise.Number)
+  fmt.Printf("Prepare: [%v][%v]\n", yourProposal.Sequence.Number, r.Slot[yourProposal.SlotNumber].Promise.Number)
   if yourProposal.Sequence.Number > r.Slot[yourProposal.SlotNumber].Promise.Number {
     r.Slot[yourProposal.SlotNumber].Promise.Number = yourProposal.Sequence.Number
     r.Slot[yourProposal.SlotNumber].Promise.Address = yourProposal.Sequence.Address
-    r.Slot[yourProposal.SlotNumber].HighestN = yourProposal.Sequence.Number
+    // if (yourProposal.Sequence.Number > r.Slot[yourProposal.SlotNumber].) {
+    //   r.Slot[yourProposal.SlotNumber].HighestN = yourProposal.Sequence.Number
+    // }
     myReply.Okay = true
     myReply.Promised = yourProposal.Slot.Promise
     myReply.Command = r.Slot[yourProposal.SlotNumber].Command
@@ -33,6 +35,7 @@ func (r *Replica) Accept(yourProposal AcceptRequest, myReply *AcceptResponse) er
   r.Mutex.Lock()
   // Accept: called with N=1/:8001 Command={"put r t"}
   fmt.Printf("[%v] Accept: called with N=[%v] Command={%v}\n", r.ToApply, yourProposal.Sequence.Number, yourProposal.Command)
+  fmt.Printf("Accept: [%v][%v]\n", yourProposal.Sequence.Number, r.Slot[yourProposal.SlotNumber].Promise.Number)
   if yourProposal.Sequence.Number >= r.Slot[yourProposal.SlotNumber].Promise.Number {
     r.Slot[yourProposal.SlotNumber].Command = yourProposal.Command
     myReply.Okay = true
@@ -42,7 +45,7 @@ func (r *Replica) Accept(yourProposal AcceptRequest, myReply *AcceptResponse) er
   } else if (r.Slot[yourProposal.SlotNumber].Promise.Number > yourProposal.Sequence.Number) {
     myReply.Okay = false
     myReply.Promised = r.Slot[yourProposal.SlotNumber].Promise
-    fmt.Printf("no sir")
+    fmt.Printf("[%v] Accept: --> \n", r.ToApply)
   }
   r.Mutex.Unlock()
   return nil
@@ -87,10 +90,10 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
   var prepare_response PrepareResponse
   r.Mutex.Unlock()
 
-  fmt.Printf("[%v] Propose: starting prepare round with N=[%v]\n", r.ToApply, prepare_request.Sequence.Number)
 // PREPARE ROUND
   done := false
   for { // if prepare round fails the first time then find the next highest Sequence Number
+    fmt.Printf("[%v] Propose: starting prepare round with N=[%v]\n", r.ToApply, prepare_request.Sequence.Number)
     time.Sleep(time.Second*2)
     upVote := 0
     downVote := 0
@@ -115,10 +118,17 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
         }
       } else if (prepare_response.Okay == false) {
         downVote++
+        if (prepare_response.Promised.Number >= prepare_request.Sequence.Number) {
+          prepare_request.Sequence.Number = prepare_response.Promised.Number + 1
+          fmt.Printf("new n=[%v]\n", prepare_request.Sequence.Number)
+          break
+          // fmt.Println("hello")
+          // prepare_request.Sequence.Number = prepare_response.Promised.Number
+        }
         fmt.Printf("[%v] Propose: --> no vote received with Promise=[%v]/[%v]\n", r.ToApply, prepare_response.Promised.Number, prepare_response.Promised.Address)
-        prepare_request.Slot.Promise.Number = prepare_response.Promised.Number + 1
         if (downVote * 2 >= len(r.Cell) + 1) {
           fmt.Printf("[%v] Propose: --> got a majority of no votes, ignoring any additional responses\n", r.ToApply)
+          fmt.Printf("[%v] Propose: --> prepare failed, sleeping for 2 seconds\n", r.ToApply)
           time.Sleep(time.Second*2)
           break
         }
@@ -128,12 +138,13 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
       break
     }
   }
+  slot.HighestN = prepare_request.Sequence.Number
   fmt.Printf("[%v] Propose: starting accept round with N=[%v] Command={%v}\n", r.ToApply, slot.HighestN, slot.Command)
 // ACCEPT ROUND
   r.Mutex.Lock()
   var accept_request AcceptRequest
   accept_request.Slot = slot
-  accept_request.Sequence = seq
+  accept_request.Sequence = prepare_request.Sequence
   accept_request.Command = cmd
   // accept_request.SlotNumber = 0
   var accept_response AcceptResponse
