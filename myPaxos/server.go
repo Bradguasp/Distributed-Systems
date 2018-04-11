@@ -1,7 +1,7 @@
 package main
 
 import (
-  // "fmt"
+  "fmt"
   "log"
   "net/http"
   "net"
@@ -37,7 +37,7 @@ func getLocalAddress() string {
 func createReplica(address string, cell []string) *Replica {
   replica := new(Replica)
   replica.Slot = make([]Slot, 10)
-  replica.Data = make(map[string]string)
+  replica.Data = make(map[string][]string)
   replica.Address = address
   // replica.Data["Hello"] = "World"
   replica.ToApply = 0
@@ -65,7 +65,7 @@ func createReplica(address string, cell []string) *Replica {
 func call(address string, method string, request interface{}, reply interface{}) error {
   client, err := rpc.DialHTTP("tcp", string(address))
   if err != nil {
-    log.Printf("Dialing Error: %v ", err)
+    fmt.Printf("Dialing Error: %v went down\n", address)
     return err
   }
   defer client.Close()

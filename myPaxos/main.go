@@ -16,7 +16,7 @@ var (
   mReplica *Replica
 )
 
-func propose(cmd string, args []string) {
+func applyCmd(cmd string, args []string) {
   var proposal Command
   if (len(args) == 2) {
     proposal.Command = fmt.Sprintf("%s %s %s", cmd, args[0], args[1])
@@ -30,6 +30,11 @@ func propose(cmd string, args []string) {
   if err := call(mAddress, "Replica.Propose", proposal, &reply); err != nil {
     fmt.Println("Error calling function Replica.Propose %v", err)
   }
+
+  // if (reply) {
+  //   var junk Nothing
+  //   var reply string
+  // }
   // more work
 
 }
@@ -51,9 +56,13 @@ func getCommands() {
   for {
     cmd, args := readCommand()
     if cmd == "put" {
-      go propose(cmd, args[:2])
+      go applyCmd(cmd, args[:2])
     } else if (cmd == "dump") {
       dump()
+    } else if (cmd == "get") {
+      applyCmd(cmd, args[:1])
+    } else if (cmd == "delete") {
+      
     }
   }
 }

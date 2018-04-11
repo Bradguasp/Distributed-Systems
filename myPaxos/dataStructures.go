@@ -15,7 +15,7 @@ type Replica struct {
   Address string
   Cell []string
   Slot []Slot // represents a single command to apply to database
-  Data map[string]string
+  Data map[string][]string
   ToApply int
   Mutex sync.Mutex
   Listeners map[string]chan string
@@ -87,16 +87,21 @@ type DecideRequest struct {
 
 type DecideResponse struct {
   Okay bool
+  Requested bool
+  Key string
+  Value []string
+  Address string
+}
+
+type KeyValue struct {
+  Key string
+  Value string
 }
 
 
 func (c Command) String() string {
   return c.Command
 }
-
-// Each slot represents a single command that should be applied to the database
-// the goal of the system is to ensure that every replica agrees on the same operation in each slot
-// and applies them to the database in the same order.
 
 func (pr PrepareResponse) String() string {
   return pr.Command.String()

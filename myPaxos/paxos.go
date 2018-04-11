@@ -4,6 +4,7 @@ import (
   "fmt"
   //"log"
   "time"
+  "strings"
 )
 
 // PrepareRequest: Slot, Sequence // PrepareResponse: Okay, Promised, Command,  -> Slot <- this may be useless
@@ -37,7 +38,6 @@ func (r *Replica) Accept(yourProposal AcceptRequest, myReply *AcceptResponse) er
   fmt.Printf("[%v] Accept: called with N=[%v] Command={%v}\n", r.ToApply, yourProposal.Sequence.Number, yourProposal.Command)
   fmt.Printf("Accept: [%v][%v]\n", yourProposal.Sequence.Number, r.Slot[yourProposal.SlotNumber].Promise.Number)
   if yourProposal.Sequence.Number >= r.Slot[yourProposal.SlotNumber].Promise.Number {
-    r.Slot[yourProposal.SlotNumber].Command = yourProposal.Command
     myReply.Okay = true
     myReply.Promised = r.Slot[yourProposal.SlotNumber].Promise
     r.Slot[yourProposal.SlotNumber].Command = yourProposal.Command
@@ -54,15 +54,44 @@ func (r *Replica) Accept(yourProposal AcceptRequest, myReply *AcceptResponse) er
 // Slot, Command
 func (r *Replica) Decide(yourProposal DecideRequest, myReply *DecideResponse) error {
   r.Mutex.Lock()
-  defer r.Mutex.Unlock()
+  r.Mutex.Unlock()
   fmt.Printf("[%v] Decide: called with Command={%v}\n", r.ToApply, yourProposal.Command)
   if (yourProposal.Slot.Decided == true) {
     r.Slot[yourProposal.SlotNumber] = yourProposal.Slot
     myReply.Okay = true
     r.ToApply++
     fmt.Printf("[%v] Decide: --> Applying Command={%v}\n", r.ToApply, yourProposal.Command)
+
+    if err := call(r.Address, "Replica.ApplyCommand", yourProposal.Command, &myReply); err != nil {
+    }
+    //fmt.Printf("-->>requested<<--: %v\n", myReply.Requested)
   } else {
     myReply.Okay = false
+  }
+  return nil
+}
+
+func (r *Replica) ApplyCommand(command Command, myReply *DecideResponse) error {
+  // r.Mutex.Lock()
+  // defer r.Mutex.Unlock()
+  fmt.Printf("[%v] Apply: called with Command={%v}\n", r.ToApply, command.Command)
+  fmt.Printf("cmd.Command is of type [%T]\n", command.Command)
+  if strings.Fields(command.Command)[0] == "put" {
+    key := strings.Fields(command.Command)[1]
+    value := strings.Fields(command.Command)[2:]
+    r.Data[key] = value
+  } else if (strings.Fields(command.Command)[0] == "get") {
+    iso := strings.Fields(command.Command)[1]
+    for key,value := range(r.Data) {
+      if key == iso {
+        myReply.Key = iso
+        myReply.Value = value
+        myReply.Address = r.Address
+        myReply.Requested = true
+        return nil
+      }
+      // fmt.Printf("key %v | value %v\n", key, value)
+    }
   }
   return nil
 }
@@ -143,10 +172,10 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
 // ACCEPT ROUND
   r.Mutex.Lock()
   var accept_request AcceptRequest
-  accept_request.Slot = slot
+  accept_request.Slot = prepare_request.Slot
   accept_request.Sequence = prepare_request.Sequence
   accept_request.Command = cmd
-  // accept_request.SlotNumber = 0
+  accept_request.SlotNumber = r.ToApply
   var accept_response AcceptResponse
   // fmt.Printf("slot.command: %v\n", yourProposal.Slot.Command)
   r.Mutex.Unlock()
@@ -157,10 +186,6 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
     call(c, "Replica.Accept", accept_request, &accept_response)
     if (accept_response.Okay == true) {
       upVote++
-      // if (prepare_response.Promised.Number > prepare_request.Sequence.Number) {
-        // fmt.Println("hello")
-        // prepare_request.Sequence.Number = prepare_response.Promised.Number
-      // }
       fmt.Printf("[%v] Propose: -->" + "yes " + "vote received\n", r.ToApply)
       if (upVote * 2 >= len(r.Cell) + 1) {
         decided = true
@@ -188,7 +213,7 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
     var decide_request DecideRequest
     decide_request.Slot = slot
     decide_request.Command = cmd
-    decide_request.SlotNumber = 0
+    decide_request.SlotNumber = r.ToApply
     var decide_response DecideResponse
     r.Mutex.Unlock()
 
@@ -198,14 +223,15 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
       call(c, "Replica.Decide", decide_request, &decide_response)
       if (decide_response.Okay == true) {
         upVote++
-        fmt.Println("[", accept_request.SlotNumber, "] Decide accpeted", upVote, "/", len(r.Cell) + 1)
+        //fmt.Println("[", accept_request.SlotNumber, "] Decide accpeted", upVote, "/", len(r.Cell) + 1)
+        if decide_response.Requested {
+          fmt.Printf("replica[%v] got [%v]=> found %v\n", decide_response.Address, decide_response.Key, decide_response.Value)
+        }
       } else if (decide_response.Okay == false) {
         downVote++
-        fmt.Println("[", accept_request.SlotNumber, "] Decide declined", downVote, "/", len(r.Cell) + 1)
+        //fmt.Println("[", accept_request.SlotNumber, "] Decide declined", downVote, "/", len(r.Cell) + 1)
       }
     }
-    // r.Slot[yourProposal.SlotNumber].Command = yourProposal.Command
-    // at this point. the other 2 applied the command to their slots
     // need to think more | line below prints empty since i never called myself because of majority
     fmt.Println("Command Stored [", r.Slot[accept_request.SlotNumber].Command, "]")
   }
