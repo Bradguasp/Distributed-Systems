@@ -42,6 +42,7 @@ func (r *Replica) Accept(yourProposal AcceptRequest, myReply *AcceptResponse) er
   } else if (r.Slot[yourProposal.SlotNumber].Promise.Number > yourProposal.Sequence.Number) {
     myReply.Okay = false
     myReply.Promised = r.Slot[yourProposal.SlotNumber].Promise
+    fmt.Printf("no sir")
   }
   r.Mutex.Unlock()
   return nil
@@ -64,9 +65,9 @@ func (r *Replica) Decide(yourProposal DecideRequest, myReply *DecideResponse) er
 }
 
 func (r *Replica) Propose(cmd Command, reply *bool) error {
-  time.Sleep(time.Second*3)
+  time.Sleep(time.Second*2)
   r.Mutex.Lock()
-  wait := 2
+  // wait := 2
   var seq Sequence
   seq.Address = mAddress
   seq.Number = 1
@@ -90,18 +91,20 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
 // PREPARE ROUND
   done := false
   for { // if prepare round fails the first time then find the next highest Sequence Number
+    time.Sleep(time.Second*2)
     upVote := 0
     downVote := 0
     for _, c := range(r.Cell) {
+      time.Sleep(time.Second*2)
       if err := call(c, "Replica.Prepare", prepare_request, &prepare_response); err != nil {
         fmt.Printf("Error calling function Replica.Prepare %v", err)
       }
       if (prepare_response.Okay == true) {
         upVote++
-        time.Sleep(time.Second*2)
-        // if (prepare_response.Promised.Number > slot.HighestN) {
-        //   fmt.Println("hello")
-        //   prepare_request.Slot.HighestN = prepare_response.Promised.Number
+
+        // if (prepare_response.Promised.Number > prepare_request.Sequence.Number) {
+          // fmt.Println("hello")
+          // prepare_request.Sequence.Number = prepare_response.Promised.Number
         // }
         fmt.Printf("[%v] Propose: --> yes vote received with no accepted command\n", r.ToApply)
         if (upVote * 2 >= len(r.Cell) + 1) {
@@ -117,7 +120,7 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
         if (downVote * 2 >= len(r.Cell) + 1) {
           fmt.Printf("[%v] Propose: --> got a majority of no votes, ignoring any additional responses\n", r.ToApply)
           time.Sleep(time.Second*2)
-          wait += 1
+          break
         }
       }
     }
@@ -143,6 +146,10 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
     call(c, "Replica.Accept", accept_request, &accept_response)
     if (accept_response.Okay == true) {
       upVote++
+      // if (prepare_response.Promised.Number > prepare_request.Sequence.Number) {
+        // fmt.Println("hello")
+        // prepare_request.Sequence.Number = prepare_response.Promised.Number
+      // }
       fmt.Printf("[%v] Propose: -->" + "yes " + "vote received\n", r.ToApply)
       if (upVote * 2 >= len(r.Cell) + 1) {
         decided = true
@@ -153,7 +160,9 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
       downVote++
       fmt.Printf("---accept_response = %v \n", accept_response.Promised.Number)
       if (downVote * 2 >= len(r.Cell) + 1) {
-
+        fmt.Printf("[%v] Propose: --> got a majority of no votes, ignoring any additional responses\n", r.ToApply)
+        time.Sleep(time.Second*2)
+        break
       }
     }
   }
