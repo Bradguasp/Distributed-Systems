@@ -29,7 +29,6 @@ func propose(cmd string, args []string) {
   var reply bool
   if err := call(mAddress, "Replica.Propose", proposal, &reply); err != nil {
     fmt.Println("Error calling function Replica.Propose %v", err)
-
   }
   // more work
 
@@ -52,7 +51,7 @@ func getCommands() {
   for {
     cmd, args := readCommand()
     if cmd == "put" {
-      propose(cmd, args[:2])
+      go propose(cmd, args[:2])
     } else if (cmd == "dump") {
       dump()
     }
@@ -68,7 +67,7 @@ func main() {
   flag.Parse()
   fmt.Printf("local address is [%s] \n", mAddress)
   mAddress += ":" + flag.Args()[0]
-  mReplica = createReplica(mAddress, flag.Args()[1:])
+  mReplica = createReplica(mAddress, flag.Args()[0:])
 
   fmt.Printf("Cell | [%v]\n", mReplica)
 

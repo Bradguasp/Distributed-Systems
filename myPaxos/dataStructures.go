@@ -27,7 +27,7 @@ type Slot struct {
   Command Command
   Promise Sequence
   Accepted Command
-  SlotNumber int
+  HighestN int
 }
 
 type Sequence struct {
@@ -71,6 +71,7 @@ type AcceptRequest struct {
   Slot Slot
   Sequence Sequence
   Command Command
+  SlotNumber int
 }
 
 type AcceptResponse struct {
@@ -81,6 +82,7 @@ type AcceptResponse struct {
 type DecideRequest struct {
   Slot Slot
   Command Command
+  SlotNumber int
 }
 
 type DecideResponse struct {
