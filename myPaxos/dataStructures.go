@@ -27,7 +27,7 @@ type Slot struct {
   Command Command
   Promise Sequence
   Accepted Command
-  LargestN int
+  SlotNumber int
 }
 
 type Sequence struct {
@@ -42,7 +42,7 @@ type Command struct {
 }
 
 func (my Sequence) Cmp(your Sequence) int {
-  if my.Number <= your.Number {
+  if my.Number < your.Number {
     return -1
   } else if (my.Number >= your.Number) {
     return 1
@@ -71,7 +71,6 @@ type AcceptRequest struct {
   Slot Slot
   Sequence Sequence
   Command Command
-  SlotNumber int
 }
 
 type AcceptResponse struct {
@@ -82,7 +81,6 @@ type AcceptResponse struct {
 type DecideRequest struct {
   Slot Slot
   Command Command
-  SlotNumber int
 }
 
 type DecideResponse struct {
