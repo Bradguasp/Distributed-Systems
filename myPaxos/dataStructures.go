@@ -87,7 +87,7 @@ type DecideRequest struct {
 
 type DecideResponse struct {
   Okay bool
-  Requested bool
+  Requested string
   Key string
   Value []string
   Address string

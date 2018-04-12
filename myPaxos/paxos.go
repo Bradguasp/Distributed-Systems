@@ -64,7 +64,6 @@ func (r *Replica) Decide(yourProposal DecideRequest, myReply *DecideResponse) er
 
     if err := call(r.Address, "Replica.ApplyCommand", yourProposal.Command, &myReply); err != nil {
     }
-    //fmt.Printf("-->>requested<<--: %v\n", myReply.Requested)
   } else {
     myReply.Okay = false
   }
@@ -87,10 +86,22 @@ func (r *Replica) ApplyCommand(command Command, myReply *DecideResponse) error {
         myReply.Key = iso
         myReply.Value = value
         myReply.Address = r.Address
-        myReply.Requested = true
+        myReply.Requested = "get"
         return nil
       }
       // fmt.Printf("key %v | value %v\n", key, value)
+    }
+  } else if (strings.Fields(command.Command)[0] == "delete") {
+    toDelete := strings.Fields(command.Command)[1]
+    for key,value := range(r.Data) {
+      if key == toDelete {
+        myReply.Key = toDelete
+        myReply.Value = value
+        myReply.Address = r.Address
+        myReply.Requested = "delete"
+        delete(r.Data, key)
+        return nil
+      }
     }
   }
   return nil
@@ -224,8 +235,10 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
       if (decide_response.Okay == true) {
         upVote++
         //fmt.Println("[", accept_request.SlotNumber, "] Decide accpeted", upVote, "/", len(r.Cell) + 1)
-        if decide_response.Requested {
+        if decide_response.Requested == "get" {
           fmt.Printf("replica[%v] got [%v]=> found %v\n", decide_response.Address, decide_response.Key, decide_response.Value)
+        } else if (decide_response.Requested == "delete") {
+          fmt.Printf("replica[%v] got [%v]=> deleted %v\n", decide_response.Address, decide_response.Key, decide_response.Value)
         }
       } else if (decide_response.Okay == false) {
         downVote++

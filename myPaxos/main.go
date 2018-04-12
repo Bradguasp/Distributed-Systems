@@ -62,7 +62,7 @@ func getCommands() {
     } else if (cmd == "get") {
       applyCmd(cmd, args[:1])
     } else if (cmd == "delete") {
-      
+      applyCmd(cmd, args[:1])
     }
   }
 }
