@@ -36,7 +36,7 @@ func getLocalAddress() string {
 
 func createReplica(address string, cell []string) *Replica {
   replica := new(Replica)
-  replica.Slot = make([]Slot, 10)
+  replica.Slot = make([]Slot, 15)
   replica.Data = make(map[string][]string)
   replica.Address = address
   // replica.Data["Hello"] = "World"

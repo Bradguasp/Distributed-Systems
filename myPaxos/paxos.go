@@ -74,7 +74,7 @@ func (r *Replica) ApplyCommand(command Command, myReply *DecideResponse) error {
   // r.Mutex.Lock()
   // defer r.Mutex.Unlock()
   fmt.Printf("[%v] Apply: called with Command={%v}\n", r.ToApply, command.Command)
-  fmt.Printf("cmd.Command is of type [%T]\n", command.Command)
+  // fmt.Printf("cmd.Command is of type [%T]\n", command.Command)
   if strings.Fields(command.Command)[0] == "put" {
     key := strings.Fields(command.Command)[1]
     value := strings.Fields(command.Command)[2:]
@@ -246,7 +246,7 @@ func (r *Replica) Propose(cmd Command, reply *bool) error {
       }
     }
     // need to think more | line below prints empty since i never called myself because of majority
-    fmt.Println("Command Stored [", r.Slot[accept_request.SlotNumber].Command, "]")
+    fmt.Printf("[%v] Propose: Command Stored [%v]\n", r.ToApply, r.Slot[accept_request.SlotNumber].Command)
   }
 
   return nil
@@ -263,11 +263,11 @@ func (r *Replica) Dump(junk *Nothing, reply *Nothing) error {
   fmt.Println("]")
   fmt.Println("Slots: ")
   for key, value := range r.Slot {
-    fmt.Printf("[%d] %s\n", key, value.Command.Command)
+    fmt.Printf("   [%d] %s\n", key, value.Command.Command)
   }
   fmt.Println("Data: ")
   for key, value := range r.Data {
-    fmt.Printf("[%s] %s\n", key, value)
+    fmt.Printf("   [%s] %s\n", key, value)
   }
   return nil
 }
